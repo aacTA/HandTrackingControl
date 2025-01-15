@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隔空操作</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+            position: relative;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #444;
+        }
+        .slider-container {
+            margin: 15px 0;
+            text-align: left;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .slider-container input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .slider-container span {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #777;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .help-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #6c757d;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: white;
+        }
+        .notice-button {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: #6c757d;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 600px;
+            text-align: left;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #444;
+        }
+        .modal-content p {
+            font-size: 16px;
+            color: #444;
+        }
+        .close-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .keyboard-shortcuts {
+            margin-top: 20px;
+        }
+
+        .keyboard-shortcuts label {
+            display: inline-block;
+            width: 80px;
+            font-weight: bold;
+        }
+
+        .keyboard-shortcuts select {
+            padding: 5px;
+            width: 150px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="notice-button" onclick="openModal()" style="text-align: center;">!</div>
+        <div class="help-button" onclick="openhModal()" style="text-align: center;">?</div>
+        <h1>隔空手势操控系统</h1>
+        <p>请选择您的惯用手：</p>
+        <button id="right" onclick="setHand(1)">右手</button>
+        <button id="left" onclick="setHand(-1)">左手</button>
+
+        <div class="slider-container">
+            <label for="x_fix">水平偏移量<span id="x_fix_value">0.2</span></label>
+            <input type="range" id="x_fix" min="-0.6" max="1" step="0.01" value="0.2" oninput="updateValue('x_fix')">
+        </div>
+
+        <div class="slider-container">
+            <label for="y_fix">垂直偏移量<span id="y_fix_value">0.6</span></label>
+            <input type="range" id="y_fix" min="0" max="1" step="0.01" value="0.6" oninput="updateValue('y_fix')">
+        </div>
+
+        <div class="slider-container">
+            <label for="sensitivity">移动灵敏度<span id="sensitivity_value">4</span></label>
+            <input type="range" id="sensitivity" min="1" max="10" step="0.1" value="4" oninput="updateValue('sensitivity')">
+        </div>
+
+        <div class="slider-container">
+            <label for="click_sensitivity">点击判定灵敏度<span id="click_sensitivity_value">0.04</span></label>
+            <input type="range" id="click_sensitivity" min="0.0" max="0.1" step="0.01" value="0.04" oninput="updateValue('click_sensitivity')">
+        </div>
+
+        <div class="slider-container">
+            <label for="scroll_value">滚动值<span id="scroll_value_value">200</span></label>
+            <input type="range" id="scroll_value" min="0" max="1000" step="50" value="200" oninput="updateValue('scroll_value')">
+        </div>
+        <div class="keyboard-shortcuts">
+            <div>
+                <label for="action1">拇指:</label>
+                <select id="action1">
+                    <option value="">禁用</option>
+                    <option value="ctrl+c">Ctrl + C</option>
+                    <option value="ctrl+v">Ctrl + V</option>
+                    <option value="ctrl+a">Ctrl + A</option>
+                    <option value="ctrl+x">Ctrl + X</option>
+                    <option value="enter">Enter</option>
+                </select>
+            </div>
+        <div>
+        <div class="keyboard-shortcuts">
+            <div>
+                <label for="action2">食指:</label>
+                <select id="action2">
+                    <option value="">禁用</option>
+                    <option value="ctrl+c">Ctrl + C</option>
+                    <option value="ctrl+v">Ctrl + V</option>
+                    <option value="ctrl+a">Ctrl + A</option>
+                    <option value="ctrl+x">Ctrl + X</option>
+                    <option value="enter">Enter</option>
+                </select>
+            </div>
+        <div>
+        <div class="keyboard-shortcuts">
+            <div>
+                <label for="action3">中指:</label>
+                <select id="action3">
+                    <option value="">禁用</option>
+                    <option value="ctrl+c">Ctrl + C</option>
+                    <option value="ctrl+v">Ctrl + V</option>
+                    <option value="ctrl+a">Ctrl + A</option>
+                    <option value="ctrl+x">Ctrl + X</option>
+                    <option value="enter">Enter</option>
+                </select>
+            </div>
+        <div>
+        <button id="start-button" onclick="startTracking()">启动</button>
+        <button id="stop-button" onclick="stopTracking()">停止</button>
+        <p id="status">状态：等待操作</p>
+
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2>注意</h2>
+            <p>启动前需确保选择适合您的配置项，默认值不一定适合所有用户</p>
+            <ul>
+                <li>调整水平方向的偏移量，右手默认值0.2，左手建议值0.6，最好自行调整，值越小指针起始位置越靠近左边，值越大起始位置越靠近右边。</li>
+                <li>调整垂直方向的偏移量，默认值0.65，值越大越靠近上方，值越小越靠近下方。</li>
+                <li>调整鼠标移动的灵敏度，默认值4，值越大越灵敏。</li>
+                <li>调整点击的灵敏度，默认值0.04，值越大越灵敏</li>
+                <li>设置手势滑动的滚动值，默认值200</li>
+                <li>自定义非惯用手拇指、食指、中指的操作</li>
+            </ul>
+            需注意偏移量和灵敏度的合理设置，否则有可能受摄像头录制范围影响移动不到边界
+            <div style="text-align: center;">
+                <button class="close-button" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hmodal" class="modal">
+        <div class="modal-content">
+            <h2>帮助</h2>
+            <p>本系统有多个操作功能，开始时需要选择您的惯用手</p>
+                <ul>
+                惯用手部分：
+                    <li>惯用手负责操控鼠标的移动，转动手背朝向屏幕(A状态)或移出摄像头区域可以禁用惯用手的操控，从A状态转回恢复操控</li>
+                    <li>拇指内收为双击</li>
+                    <li>食指下压为单击</li>
+                    <li>中指下压为右键单击</li>
+                    <li>保持握拳为拖动鼠标，恢复后会短暂保持拖动状态</li>
+                </ul>
+                <ul>
+                非惯用手部分：
+                    <li>手势上挥为下滑</li>
+                    <li>手势下挥为上滑，上下滑切换时需要保持对应的初始状态一秒钟</li>
+                    <li>握拳为截屏，截屏时间间隔为一秒</li>
+                    <li>拇指、食指、中指的操作可以自定义</li>
+                </ul>
+                <figure>
+                    <img src="{{ url_for('static', filename='up.png') }}" alt="上挥动作下滑/上滑初始状态" width="50" height="50">
+                    <figcaption>上挥动作下滑/上滑初始状态</figcaption>
+                </figure>
+                <figure>
+                    <img src="{{ url_for('static', filename='down.png') }}" alt="下挥动作上滑/下滑初始状态" width="50" height="50">
+                    <figcaption>下挥动作上滑/下滑初始状态</figcaption>
+                </figure>
+                <figure>
+                    <img src="{{ url_for('static', filename='fist.png') }}" alt="握拳" width="50" height="50">
+                    <figcaption>握拳</figcaption>
+                </figure>
+                为了您更好的操控体验，使用时除上下划操作，其余操作请尽量让手掌正朝屏幕，操作尽量快速准确，复原尽量快速到位
+
+            <div style="text-align: center;">
+                <button class="close-button" onclick="closehModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        window.addEventListener('load', function () {
+            fetch("/get_config")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("x_fix").value = data.x_fix
+                    document.getElementById("y_fix").value = data.y_fix
+                    document.getElementById("sensitivity").value = data.sensitivity
+                    document.getElementById("click_sensitivity").value = data.click_sensitivity
+                    document.getElementById("scroll_value").value = data.scroll_value
+                    setHand(data.hand)
+                    document.getElementById("action1").value = data.action1 || ""
+                    document.getElementById("action2").value = data.action2 || ""
+                    document.getElementById("action3").value = data.action3 || ""
+                    updateValue("x_fix")
+                    updateValue("y_fix")
+                    updateValue("sensitivity")
+                    updateValue("click_sensitivity")
+                    updateValue("scroll_value")
+                })
+        })
+
+        function updateValue(sliderId) {
+            const slider = document.getElementById(sliderId)
+            const valueSpan = document.getElementById(`${sliderId}_value`)
+            valueSpan.textContent = slider.value
+        }
+
+        function setHand(hand) {
+            let strhand = ["left", "", "right"]
+            document.getElementById(strhand[hand + 1]).disabled = true
+            fetch("/set_hand", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ hand: hand })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("status").innerText = `已选择：${data.hand === 1 ? "右手" : "左手"}`
+                document.getElementById(strhand[-hand + 1]).disabled = false
+            }).catch(error => {
+                console.error("Error:", error)
+                document.getElementById(strhand[hand + 1]).disabled = false
+            })
+        }
+        function disableButtons() {
+            document.getElementById("start-button").disabled = true
+            document.getElementById("stop-button").disabled = true
+        }
+
+        function enableButtons() {
+            document.getElementById("start-button").disabled = false
+            document.getElementById("stop-button").disabled = false
+        }
+        function startTracking() {
+            disableButtons()
+            const x_fix = document.getElementById("x_fix").value
+            const y_fix = document.getElementById("y_fix").value
+            const sensitivity = document.getElementById("sensitivity").value
+            const click_sensitivity = document.getElementById("click_sensitivity").value
+            const scroll_value = document.getElementById("scroll_value").value
+            const action1 = document.getElementById("action1").value || ""
+            const action2 = document.getElementById("action2").value || ""
+            const action3 = document.getElementById("action3").value || ""
+            fetch("/start", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    x_fix: parseFloat(x_fix),
+                    y_fix: parseFloat(y_fix),
+                    sensitivity: parseFloat(sensitivity),
+                    click_sensitivity: parseFloat(click_sensitivity),
+                    scroll_value: parseInt(scroll_value),
+                    action1: action1,
+                    action2: action2,
+                    action3: action3
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("status").innerText = "状态：" + data.status
+                enableButtons()
+            }).catch(error => {
+                console.error("Error:", error)
+                enableButtons()
+            })
+        }
+
+        function stopTracking() {
+            disableButtons()
+            fetch("/stop", {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("status").innerText = "状态：" + data.status
+                enableButtons()
+            }).catch(error => {
+                console.error("Error:", error)
+                enableButtons()
+            })
+        }
+
+        function openModal() {
+            document.getElementById("modal").style.display = "flex"
+        }
+        function openhModal() {
+            document.getElementById("hmodal").style.display = "flex"
+        }
+        function closeModal() {
+            document.getElementById("modal").style.display = "none"
+        }
+        function closehModal() {
+            document.getElementById("hmodal").style.display = "none"
+        }
+
+        window.addEventListener('beforeunload', function (event) {
+            fetch("/stop", {
+                method: "POST"
+            })
+        })
+    </script>
+</body>
+</html>
