@@ -253,7 +253,7 @@ def hand_tracking():
                         continue
                     elif do_scroll(jz, rz, hand_state):
                         if reset:
-                            pyautogui.scroll(scroll_value * MAIN_HAND if hand_state else -scroll_value * MAIN_HAND)
+                            pyautogui.scroll(-scroll_value if hand_state else scroll_value)
                             reset = False
                             last_time = time.time()
                         elif time.time() - last_time >= 1 and not reset:
@@ -305,14 +305,19 @@ def hand_tracking():
                         continue
                     else:
                         pyautogui.mouseUp()
-                    if is_disable_condition(x4, (x5 + landmarks[7].x)/2, label=='Left'
-                                            ) and abs(x4 - pre_x4) > abs(x5 - x9):
-                        pyautogui.doubleClick()
-                    elif should_click(y8, pre_y8, y5):
-                        pyautogui.click()
-                    elif should_click(y12, pre_y12, y9):
-                        pyautogui.rightClick()
-                    else:
+                    flag = True
+                    if sum([jz2 > rz for i in range(4)]) == 0:
+                        if is_disable_condition(x4, (x5 + landmarks[7].x)/2, label=='Left'
+                                                ) and abs(x4 - pre_x4) > abs(x5 - x9):
+                            pyautogui.doubleClick()
+                            flag = False
+                        elif should_click(y8, pre_y8, y5):
+                            pyautogui.click()
+                            flag = False
+                        elif should_click(y12, pre_y12, y9):
+                            pyautogui.rightClick()
+                            flag = False
+                    if flag:
                         move_cursor(total_x / 5, total_y / 5)
                     pre_y12 = y12
                     pre_y8 = y8
