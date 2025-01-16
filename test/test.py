@@ -52,7 +52,7 @@ with mp_hands.Hands(
         landmarks = hand_landmarks.landmark
         ax = landmarks[4].x
         ay = landmarks[4].y
-        bx = landmarks[16].x
+        bx = landmarks[16].x 
         by = landmarks[16].y
         ox = landmarks[0].x
         oy = landmarks[0].y
